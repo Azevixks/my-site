@@ -12,6 +12,8 @@
     const URL = "./my_model/";
 
     let model, webcam, labelContainer, maxPredictions;
+    let lastPredictionTime = 0; // Зберігає час останнього запиту
+    const predictionInterval = 5000; // Інтервал у мілісекундах (5 секунд)
 
     // Load the image model and setup the webcam
     async function init() {
@@ -48,7 +50,6 @@
 
     // run the webcam image through the image model
     async function predict() {
-        // predict can take in an image, video or canvas html element
         const prediction = await model.predict(webcam.canvas);
         for (let i = 0; i < maxPredictions; i++) {
             const classPrediction =
@@ -56,16 +57,15 @@
             labelContainer.childNodes[i].innerHTML = classPrediction;
         }
 
-        // Get the class with the highest probability
         const highestPrediction = prediction.reduce((prev, current) => {
             return (prev.probability > current.probability) ? prev : current;
         });
-        // Display the class name and probability
+
         console.log(`Class: ${highestPrediction.className}`);
-        //highestPrediction.className
-        if (highestPrediction.className != "Нічого") {
-            // query https://index.minfin.com.ua/ua/markets/wares/prods/fruits-vegetables/vegetables/
-            // get the price of the product
+
+        const currentTime = Date.now(); // Поточний час у мілісекундах
+        if (highestPrediction.className !== "Нічого" && (currentTime - lastPredictionTime > predictionInterval)) {
+            lastPredictionTime = currentTime; // Оновлюємо час останнього запиту
 
             // Send a POST request to the backend
             fetch('https://vegetable-price-scout-c4dd126c3fa3.herokuapp.com/predict', {
@@ -91,6 +91,6 @@
                 .catch(error => {
                     console.error('Error fetching the price:', error);
                 });
-        } 
+        }
     }
 </script>

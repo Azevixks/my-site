@@ -67,19 +67,25 @@
             // query https://index.minfin.com.ua/ua/markets/wares/prods/fruits-vegetables/vegetables/
             // get the price of the product
 
-            fetch(`https://index.minfin.com.ua/ua/markets/wares/prods/fruits-vegetables/vegetables/`)
-                .then(response => response.text())
+            // Send a POST request to the backend
+            fetch('https://vegetable-price-scout-c4dd126c3fa3.herokuapp.com/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ class_name: highestPrediction.className }),
+            })
+                .then(response => response.json())
                 .then(data => {
-                    // Parse the HTML and extract the price
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data, 'text/html');
-                    const priceElement = doc.querySelector('.price');
-                    if (priceElement) {
-                        const price = priceElement.textContent;
-                        console.log(`Price: ${price}`);
-                        alert(`Price of ${highestPrediction.className}: ${price}`);
+                    if (data.results) {
+                        const results = data.results[highestPrediction.className.toLowerCase()];
+                        let message = `Prices for ${highestPrediction.className}:\n`;
+                        for (const [market, price] of Object.entries(results)) {
+                            message += `${market}: ${price} UAH\n`;
+                        }
+                        alert(message);
                     } else {
-                        console.log('Price not found');
+                        alert('Product not found.');
                     }
                 })
                 .catch(error => {

@@ -1,96 +1,164 @@
-<div>Teachable Machine Image Model</div>
-<button type="button" onclick="init()">Start</button>
-<div id="webcam-container"></div>
-<div id="label-container"></div>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-<script type="text/javascript">
-    // More API functions here:
-    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
-
-    // the link to your model provided by Teachable Machine export panel
-    const URL = "./my_model/";
-
-    let model, webcam, labelContainer, maxPredictions;
-    let lastPredictionTime = 0; // Зберігає час останнього запиту
-    const predictionInterval = 10000; // Інтервал у мілісекундах (10 секунд)
-
-    // Load the image model and setup the webcam
-    async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-
-        // load the model and metadata
-        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
-        // or files from your local hard drive
-        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        // Convenience function to setup a webcam
-        const flip = true; // whether to flip the webcam
-        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-        await webcam.setup(); // request access to the webcam
-        await webcam.play();
-        window.requestAnimationFrame(loop);
-
-        // append elements to the DOM
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-        labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) { // and class labels
-            labelContainer.appendChild(document.createElement("div"));
-        }
-    }
-
-    async function loop() {
-        webcam.update(); // update the webcam frame
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
-
-    // run the webcam image through the image model
-    async function predict() {
-        const prediction = await model.predict(webcam.canvas);
-        for (let i = 0; i < maxPredictions; i++) {
-            const classPrediction =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-            labelContainer.childNodes[i].innerHTML = classPrediction;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegetable Price Scout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
 
-        const highestPrediction = prediction.reduce((prev, current) => {
-            return (prev.probability > current.probability) ? prev : current;
-        });
+        header {
+            background-color: #4caf50; /* Колір зеленого овоча */
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
 
-        console.log(`Class: ${highestPrediction.className}`);
+        main {
+            padding: 20px;
+            text-align: center;
+        }
 
-        const currentTime = Date.now(); // Поточний час у мілісекундах
-        if (highestPrediction.className !== "Нічого" && (currentTime - lastPredictionTime > predictionInterval)) {
-            lastPredictionTime = currentTime; // Оновлюємо час останнього запиту
+        #webcam-container {
+            margin: 20px auto;
+        }
 
-            // Send a POST request to the backend
-            fetch('https://vegetable-price-scout-c4dd126c3fa3.herokuapp.com/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ class_name: highestPrediction.className }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.results) {
-                        const results = data.results[highestPrediction.className.toLowerCase()];
-                        let message = `Prices for ${highestPrediction.className}:\n`;
-                        for (const [market, price] of Object.entries(results)) {
-                            message += `${market}: ${price} UAH\n`;
-                        }
-                        alert(message);
-                    } else {
-                        alert('Product not found.');
-                    }
+        #label-container {
+            margin-top: 20px;
+        }
+
+        #price-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: inline-block;
+            text-align: left;
+        }
+
+        .price-item {
+            margin: 5px 0;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Vegetable Price Scout</h1>
+    </header>
+    <main>
+        <div>Teachable Machine Image Model</div>
+        <button type="button" onclick="init()">Start</button>
+        <div id="webcam-container"></div>
+        <div id="label-container"></div>
+        <div id="price-container" style="display: none;">
+            <h3>Prices:</h3>
+            <div id="price-list"></div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        const URL = "./my_model/";
+
+        let model, webcam, labelContainer, maxPredictions;
+        let lastPredictionTime = 0;
+        const predictionInterval = 10000;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+
+            const highestPrediction = prediction.reduce((prev, current) => {
+                return (prev.probability > current.probability) ? prev : current;
+            });
+
+            const currentTime = Date.now();
+            if (highestPrediction.className !== "Нічого" && (currentTime - lastPredictionTime > predictionInterval)) {
+                lastPredictionTime = currentTime;
+
+                fetch('https://vegetable-price-scout-c4dd126c3fa3.herokuapp.com/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ class_name: highestPrediction.className }),
                 })
-                .catch(error => {
-                    console.error('Error fetching the price:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.results) {
+                            const results = data.results[highestPrediction.className.toLowerCase()];
+                            const priceContainer = document.getElementById("price-container");
+                            const priceList = document.getElementById("price-list");
+                            priceList.innerHTML = ""; // Очищуємо попередні результати
+
+                            for (const [market, price] of Object.entries(results)) {
+                                const priceItem = document.createElement("div");
+                                priceItem.className = "price-item";
+                                priceItem.textContent = `${market}: ${price} UAH`;
+                                priceList.appendChild(priceItem);
+                            }
+
+                            priceContainer.style.display = "block"; // Показуємо контейнер з цінами
+                        } else {
+                            alert('Product not found.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching the price:', error);
+                    });
+            }
         }
-    }
-</script>
+    </script>
+</body>
+</html>

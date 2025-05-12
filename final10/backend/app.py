@@ -5,7 +5,7 @@ from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["https://azevixks.github.io/"])
+CORS(app, origins=["https://azevixks.github.io"])
 
 @app.route('/')
 def home():

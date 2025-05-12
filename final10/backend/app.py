@@ -6,6 +6,7 @@ import os
 
 app = Flask(__name__)
 CORS(app, origins=["https://azevixks.github.io"])
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/')
 def home():

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Налаштування Stop Fake</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Налаштування</h1>
+      <label class="row">
+        <span>Backend URL</span>
+        <input id="backendUrl" type="text" placeholder="http://localhost:8000/analyze" />
+      </label>
+      <label class="row">
+        <span>Автоаналіз сторінок</span>
+        <input id="autoAnalyze" type="checkbox" />
+      </label>
+      <div class="actions">
+        <button id="save">Зберегти</button>
+        <span id="saved" class="saved hidden">Збережено</span>
+      </div>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
+
+
+

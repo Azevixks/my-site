@@ -41,3 +41,17 @@
 2. Відкрийте будь-яку новинну статтю.
 3. Натисніть на іконку Stop Fake, щоб побачити результат аналізу у Popup.
 4. Результат також може автоматично відображатися без кліку, якщо увімкнено відповідні налаштування.
+
+## Збірка ZIP
+```bash
+cd project/extension
+python build_extension.py
+```
+Готовий файл: `project/extension/dist/stop-fake-extension.zip` (можна завантажити в Chrome як packed).
+
+## Файли
+- `manifest.json` – конфігурація розширення.
+- `background.js` – відправляє текст на backend та кешує результат.
+- `content.js` + `helpers.js` – збір тексту зі сторінки.
+- `popup/*` – UI результату.
+- `options_page/*` – налаштування (URL бекенду, автоаналіз).

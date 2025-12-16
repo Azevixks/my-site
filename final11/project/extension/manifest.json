@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Stop Fake",
+  "version": "0.1.0",
+  "description": "Перевірка новин: фейк / не фейк / невизначено",
+  "action": {
+    "default_title": "Stop Fake",
+    "default_popup": "popup/popup.html"
+  },
+  "options_page": "options_page/options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://localhost:8000/*"],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["helpers.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
+

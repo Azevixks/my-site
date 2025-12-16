@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stop Fake</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Stop Fake</h1>
+      <button id="refresh">Аналізувати знову</button>
+    </header>
+    <section id="status" class="status">Очікування даних...</section>
+    <section id="result" class="hidden">
+      <div class="verdict">
+        <span id="label">—</span>
+        <span id="confidence"></span>
+      </div>
+      <div id="emotion"></div>
+      <div id="emotionDesc"></div>
+      <ul id="reasons"></ul>
+      <div id="error" class="error"></div>
+    </section>
+    <footer class="footer">
+      <a id="settings" href="../options_page/options.html" target="_blank">Налаштування</a>
+    </footer>
+    <script src="popup.js"></script>
+  </body>
+</html>
+
+
+
